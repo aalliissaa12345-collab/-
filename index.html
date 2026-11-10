@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мини-тест по ИСМП — Безопасная среда — наша забота</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Inter','Segoe UI',Arial,sans-serif;
+    background:#dbeafe;
+    color:#111827;
+    min-height:100vh;
+    padding:40px 20px;
+  }
+  .wrap { max-width:860px; margin:0 auto; }
+  .hero { text-align:left; margin-bottom:36px; }
+  .hero h1 { font-size:44px; font-weight:800; line-height:1.15; letter-spacing:-1px; }
+  .hero .accent { font-style:italic; font-weight:600; color:#a5b4d8; display:block; margin-top:4px; }
+  .hero p { margin-top:16px; font-size:18px; color:#374151; max-width:560px; line-height:1.5; }
+  .card {
+    background:#ffffff;
+    border-radius:24px;
+    padding:32px;
+    box-shadow:0 8px 30px rgba(30,58,138,.08);
+    margin-bottom:24px;
+  }
+  .progressbar { height:10px; background:#e5edf8; border-radius:999px; overflow:hidden; margin-bottom:8px; }
+  .progressbar .fill { height:100%; width:0%; background:#a5b4d8; border-radius:999px; transition:width .4s ease; }
+  .meta { display:flex; justify-content:space-between; font-size:14px; color:#6b7280; margin-bottom:24px; }
+  .qnum { font-size:13px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#818cf8; margin-bottom:8px; }
+  .qtext { font-size:22px; font-weight:800; line-height:1.3; margin-bottom:20px; }
+  .opt {
+    display:block; width:100%; text-align:left;
+    background:#eef4fb; border:2px solid transparent; border-radius:16px;
+    padding:16px 20px; margin-bottom:12px; font-size:16px; font-family:inherit; color:#111827;
+    cursor:pointer; transition:all .2s ease;
+  }
+  .opt:hover:not(:disabled) { background:#dde9f7; transform:translateX(4px); }
+  .opt:disabled { cursor:default; }
+  .opt.correct { background:#e3f7e8; border-color:#34c759; font-weight:600; }
+  .opt.wrong { background:#fdeaea; border-color:#e5484d; }
+  .explain {
+    display:none; margin-top:16px; background:#e8f0fb; border-radius:16px; padding:16px 20px;
+    font-size:15px; line-height:1.5; color:#1e3a8a;
+  }
+  .explain.show { display:block; }
+  .btn {
+    display:inline-block; background:#a8b8d8; color:#1e2a4a; border:none; border-radius:999px;
+    padding:16px 36px; font-size:15px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+    font-family:inherit; cursor:pointer; margin-top:20px; transition:all .2s ease;
+  }
+  .btn:hover { background:#96a9cf; transform:translateY(-2px); }
+  .next { display:none; }
+  .next.show { display:inline-block; }
+  .result { text-align:center; padding:20px 0; }
+  .result .emoji { font-size:56px; }
+  .result h2 { font-size:32px; font-weight:800; margin:12px 0 8px; }
+  .result .score { font-size:20px; color:#374151; margin-bottom:8px; }
+  .result .verdict { font-style:italic; font-weight:600; color:#a5b4d8; font-size:22px; margin-bottom:24px; }
+  .review { text-align:left; margin-top:8px; }
+  .review-item { border-top:1px solid #e5edf8; padding:16px 0; }
+  .review-item .rq { font-weight:600; margin-bottom:6px; }
+  .review-item .ok { color:#15803d; font-size:14px; font-weight:600; }
+  .review-item .no { color:#b91c1c; font-size:14px; font-weight:600; }
+  .review-item .ra { font-size:14px; color:#374151; line-height:1.5; }
+  .hidden { display:none; }
+  .footer { text-align:center; font-size:14px; color:#6b7280; margin-top:12px; font-style:italic; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>Мини-тест по ИСМП <span class="accent">— проверь себя</span></h1>
+    <p>6 вопросов по профилактике инфекций, связанных с оказанием медицинской помощи. Отвечайте — пояснение появится сразу.</p>
+  </div>
+
+  <div class="card" id="quizCard">
+    <div class="progressbar"><div class="fill" id="fill"></div></div>
+    <div class="meta"><span id="counter">Вопрос 1 из 6</span><span id="scoreLabel">Верно: 0</span></div>
+
+    <div id="quizArea">
+      <div class="qnum" id="qnum"></div>
+      <div class="qtext" id="qtext"></div>
+      <div id="options"></div>
+      <div class="explain" id="explain"></div>
+      <button class="btn next" id="nextBtn">Дальше →</button>
+    </div>
+
+    <div id="resultArea" class="result hidden">
+      <div class="emoji" id="rEmoji"></div>
+      <h2>Тест завершён</h2>
+      <div class="score" id="rScore"></div>
+      <div class="verdict" id="rVerdict"></div>
+      <div class="review" id="review"></div>
+      <button class="btn" onclick="restart()">Пройти ещё раз</button>
+    </div>
+  </div>
+  <div class="footer">Безопасная среда — наша забота</div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Что такое ИСМП?",
+    opts: [
+      "Инфекции, которые пациент получил до поступления в стационар",
+      "Инфекционные заболевания, возникшие у пациента в связи с получением медицинской помощи, а также у медработников вследствие профессиональной деятельности",
+      "Любые сезонные респираторные инфекции у пациентов",
+      "Инфекции, передающиеся только через кровь"
+    ],
+    correct: 1,
+    ex: "ИСМП — инфекции, связанные с оказанием медицинской помощи: у пациентов (в стационаре или амбулаторно) и у персонала при выполнении профессиональных обязанностей."
+  },
+  {
+    q: "Через какой срок после поступления клиника инфекции считается признаком ИСМП?",
+    opts: ["В первые 12 часов", "Через 24 часа", "Через 48–72 часа и позже", "Только через 14 суток"],
+    correct: 2,
+    ex: "Отличительный признак: клиника появляется через 48–72 часа и позже после поступления, либо в течение 30 суток (после операции — 90 суток, имплантаты — 1 год) после выписки."
+  },
+  {
+    q: "Сколько существует моментов гигиены рук по ВОЗ?",
+    opts: ["3", "5", "7", "10"],
+    correct: 1,
+    ex: "5 моментов: перед контактом с пациентом; перед процедурой; после контакта с биологическими жидкостями; после контакта с пациентом; после контакта с окружением пациента."
+  },
+  {
+    q: "Какова длительность обработки рук антисептиком в обычных ситуациях?",
+    opts: ["10 секунд", "20–30 секунд", "2 минуты", "5 минут"],
+    correct: 1,
+    ex: "Гигиеническая обработка антисептиком — 20–30 секунд, мытьё рук с мылом — 40–60 секунд, хирургическая обработка — 3–5 минут."
+  },
+  {
+    q: "В каком порядке правильно снимать средства индивидуальной защиты?",
+    opts: [
+      "Перчатки → халат → маска → очки",
+      "Маска → перчатки → халат",
+      "Халат → перчатки → маска",
+      "Очки → халат → перчатки → маска"
+    ],
+    correct: 0,
+    ex: "Снятие СИЗ: сначала перчатки (самый контаминированный элемент), затем халат, затем — маска/очки. Цель — не касаться загрязнёнными руками лица."
+  },
+  {
+    q: "Какая группа входит в структуру ИСМП как самая частая?",
+    opts: ["Инфекции хирургического вмешательства (ИОХВ)", "Инфекции мочевыводящих путей (ИМП)", "Гепатиты", "Грипп"],
+    correct: 1,
+    ex: "Наиболее частая группа — инфекции мочевыводящих путей (около 30–35%, в основном связанные с катетерами). Далее следуют ИОХВ, пневмонии и инфекции кровотока."
+  }
+];
+
+let current = 0, score = 0, answered = false;
+const results = [];
+
+function render() {
+  answered = false;
+  const q = questions[current];
+  document.getElementById('qnum').textContent = 'Вопрос ' + (current+1) + ' из ' + questions.length;
+  document.getElementById('qtext').textContent = q.q;
+  document.getElementById('fill').style.width = (current/questions.length*100) + '%';
+  document.getElementById('counter').textContent = 'Вопрос ' + (current+1) + ' из ' + questions.length;
+  document.getElementById('scoreLabel').textContent = 'Верно: ' + score;
+  document.getElementById('explain').classList.remove('show');
+  document.getElementById('nextBtn').classList.remove('show');
+  const box = document.getElementById('options');
+  box.innerHTML = '';
+  q.opts.forEach((o,i) => {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.textContent = o;
+    b.onclick = () => answer(i, b);
+    box.appendChild(b);
+  });
+}
+
+function answer(i, btn) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const buttons = document.querySelectorAll('#options .opt');
+  buttons.forEach((b, idx) => {
+    b.disabled = true;
+    if (idx === q.correct) b.classList.add('correct');
+  });
+  const ok = (i === q.correct);
+  if (ok) score++;
+  else btn.classList.add('wrong');
+  results.push(ok);
+  document.getElementById('scoreLabel').textContent = 'Верно: ' + score;
+  const ex = document.getElementById('explain');
+  ex.textContent = (ok ? 'Верно! ' : 'Не совсем. ') + q.ex;
+  ex.classList.add('show');
+  document.getElementById('nextBtn').classList.add('show');
+  document.getElementById('nextBtn').textContent = (current === questions.length-1) ? 'Показать результат →' : 'Дальше →';
+}
+
+document.getElementById('nextBtn').onclick = function() {
+  if (current < questions.length-1) { current++; render(); }
+  else finish();
+};
+
+function finish() {
+  document.getElementById('fill').style.width = '100%';
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultArea').classList.remove('hidden');
+  document.getElementById('rScore').textContent = 'Правильных ответов: ' + score + ' из ' + questions.length;
+  let v, e;
+  if (score >= 6) { v = 'Отлично! Вы отлично знаете тему ИСМП'; e = '🏆'; }
+  else if (score >= 4) { v = 'Хороший результат — стоит повторить детали'; e = '👏'; }
+  else { v = 'Стоит вернуться к теории и попробовать снова'; e = '📚'; }
+  document.getElementById('rVerdict').textContent = v;
+  document.getElementById('rEmoji').textContent = e;
+  const rv = document.getElementById('review');
+  rv.innerHTML = '';
+  questions.forEach((q,i) => {
+    const d = document.createElement('div');
+    d.className = 'review-item';
+    d.innerHTML = '<div class="rq">' + (i+1) + '. ' + q.q + '</div>' +
+      '<div class="' + (results[i] ? 'ok' : 'no') + '">' + (results[i] ? '✓ Верно' : '✗ Ошибка') + '</div>' +
+      '<div class="ra">Правильный ответ: ' + q.opts[q.correct] + '. ' + q.ex + '</div>';
+    rv.appendChild(d);
+  });
+}
+
+function restart() {
+  current = 0; score = 0; results.length = 0;
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.remove('hidden');
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
